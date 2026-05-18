@@ -1,9 +1,8 @@
 import sqlite3
-import os
-from datetime import datetime
 from pathlib import Path
 
 DATABASE_PATH = Path(__file__).parent.parent / "data" / "ailearn.db"
+
 
 def get_connection():
     """Get database connection"""
@@ -12,11 +11,12 @@ def get_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+
 def init_db():
     """Initialize database with all required tables"""
     conn = get_connection()
     cursor = conn.cursor()
-    
+
     # Users table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
@@ -28,7 +28,7 @@ def init_db():
         last_login TIMESTAMP
     )
     """)
-    
+
     # Courses table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS courses (
@@ -40,7 +40,7 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
-    
+
     # Lessons table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS lessons (
@@ -53,7 +53,7 @@ def init_db():
         FOREIGN KEY (course_id) REFERENCES courses(id)
     )
     """)
-    
+
     # Exercises table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS exercises (
@@ -68,7 +68,7 @@ def init_db():
         FOREIGN KEY (lesson_id) REFERENCES lessons(id)
     )
     """)
-    
+
     # User Progress table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS user_progress (
@@ -86,7 +86,7 @@ def init_db():
         FOREIGN KEY (exercise_id) REFERENCES exercises(id)
     )
     """)
-    
+
     # Quizzes table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS quizzes (
@@ -99,7 +99,7 @@ def init_db():
         FOREIGN KEY (course_id) REFERENCES courses(id)
     )
     """)
-    
+
     # Quiz Questions table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS quiz_questions (
@@ -114,7 +114,7 @@ def init_db():
         FOREIGN KEY (quiz_id) REFERENCES quizzes(id)
     )
     """)
-    
+
     # Quiz Attempts table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS quiz_attempts (
@@ -129,7 +129,7 @@ def init_db():
         FOREIGN KEY (quiz_id) REFERENCES quizzes(id)
     )
     """)
-    
+
     # Forum Posts table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS forum_posts (
@@ -145,7 +145,7 @@ def init_db():
         FOREIGN KEY (course_id) REFERENCES courses(id)
     )
     """)
-    
+
     # Forum Replies table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS forum_replies (
@@ -160,7 +160,7 @@ def init_db():
         FOREIGN KEY (user_id) REFERENCES users(id)
     )
     """)
-    
+
     # Certifications table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS certifications (
@@ -173,9 +173,10 @@ def init_db():
         FOREIGN KEY (course_id) REFERENCES courses(id)
     )
     """)
-    
+
     conn.commit()
     conn.close()
+
 
 def add_user(username, email, password_hash):
     """Add a new user"""
@@ -184,7 +185,7 @@ def add_user(username, email, password_hash):
     try:
         cursor.execute(
             "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-            (username, email, password_hash)
+            (username, email, password_hash),
         )
         conn.commit()
         return True
@@ -193,25 +194,27 @@ def add_user(username, email, password_hash):
     finally:
         conn.close()
 
-def get_user(username):
-    """Get user by username"""
+
+def get_user(identifier):
+    """Get user by username or email"""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    cursor.execute("SELECT * FROM users WHERE username = ? OR email = ?", (identifier, identifier))
     user = cursor.fetchone()
     conn.close()
     return user
+
 
 def update_user_login(user_id):
     """Update last login timestamp"""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?",
-        (user_id,)
+        "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?", (user_id,)
     )
     conn.commit()
     conn.close()
+
 
 def get_user_progress(user_id, course_id):
     """Get user progress for a course"""
@@ -220,7 +223,7 @@ def get_user_progress(user_id, course_id):
     cursor.execute(
         """SELECT * FROM user_progress 
            WHERE user_id = ? AND course_id = ?""",
-        (user_id, course_id)
+        (user_id, course_id),
     )
     progress = cursor.fetchall()
     conn.close()

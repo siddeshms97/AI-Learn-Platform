@@ -1,21 +1,22 @@
 import streamlit as st
 from src.db import init_db
 from src.auth import is_logged_in, logout_user
-from pages import home, courses, exercises, quiz, forum, profile, certifications
+from pages import home, courses, exercises, quiz, forum, profile, certifications, interview
 
 # Page configuration
 st.set_page_config(
     page_title="AI Learn - 0 to Hero",
     page_icon="🤖",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 # Initialize database
 init_db()
 
 # Modern Custom CSS Design
-st.markdown("""
+st.markdown(
+    """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -310,7 +311,9 @@ st.markdown("""
         h2 { font-size: 1.4rem; }
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # Sidebar radio label → internal key mapping for unauthenticated pages
 _AUTH_PAGE_MAP = {
@@ -319,6 +322,7 @@ _AUTH_PAGE_MAP = {
     "🔓 Sign In": "login",
 }
 _AUTH_PAGE_MAP_REVERSE = {v: k for k, v in _AUTH_PAGE_MAP.items()}
+
 
 # Main application
 def main():
@@ -330,9 +334,17 @@ def main():
 
         page = st.sidebar.radio(
             "Navigation",
-            ["🏠 Home", "📚 Courses", "💪 Exercises", "📝 Quizzes",
-             "💬 Community", "👤 Profile", "🏆 Certifications"],
-            label_visibility="collapsed"
+            [
+                "🏠 Home",
+                "📚 Courses",
+                "💪 Exercises",
+                "📝 Quizzes",
+                "💬 Community",
+                "👤 Profile",
+                "🏆 Certifications",
+                "👔 Interview Prep",
+            ],
+            label_visibility="collapsed",
         )
 
         if st.sidebar.button("🚪 Log Out", use_container_width=True):
@@ -354,6 +366,8 @@ def main():
             profile.show_profile(user)
         elif page == "🏆 Certifications":
             certifications.show_certifications(user)
+        elif page == "👔 Interview Prep":
+            interview.show_interview_prep(user)
     else:
         # Determine which auth page to show.
         # Programmatic redirects (button clicks) set st.session_state.auth_page.
@@ -362,7 +376,9 @@ def main():
             st.session_state.auth_page = "home"
 
         # Map current auth_page key back to sidebar label so the radio reflects it
-        default_label = _AUTH_PAGE_MAP_REVERSE.get(st.session_state.auth_page, "🏠 Home")
+        default_label = _AUTH_PAGE_MAP_REVERSE.get(
+            st.session_state.auth_page, "🏠 Home"
+        )
         sidebar_options = list(_AUTH_PAGE_MAP.keys())
         default_idx = sidebar_options.index(default_label)
 
@@ -370,7 +386,7 @@ def main():
             "Navigation",
             sidebar_options,
             index=default_idx,
-            label_visibility="collapsed"
+            label_visibility="collapsed",
         )
 
         # Sidebar selection always wins (clears any stale programmatic redirect)
@@ -384,6 +400,7 @@ def main():
             home.show_register()
         elif st.session_state.auth_page == "login":
             home.show_login()
+
 
 if __name__ == "__main__":
     main()
