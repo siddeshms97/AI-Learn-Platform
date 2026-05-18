@@ -17,13 +17,13 @@ def verify_password(password, password_hash):
 def register_user(username, email, password, password_confirm):
     """Register a new user"""
     if not username or not email or not password:
-        return False, "All fields are required"
+        return False, "All fields are required", None
 
     if password != password_confirm:
-        return False, "Passwords do not match"
+        return False, "Passwords do not match", None
 
     if len(password) < 6:
-        return False, "Password must be at least 6 characters"
+        return False, "Password must be at least 6 characters", None
 
     password_hash = hash_password(password)
     totp_secret = pyotp.random_base32()
