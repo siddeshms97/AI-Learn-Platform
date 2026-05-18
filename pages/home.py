@@ -1,4 +1,5 @@
 import streamlit as st
+import random
 from src.auth import register_user, login_user
 
 
@@ -216,7 +217,13 @@ def show_register():
         with st.form("register_form"):
             username = st.text_input("Username", placeholder="Choose a unique username")
             email = st.text_input("Email", placeholder="your@email.com")
-            mobile = st.text_input("Mobile Number", placeholder="+1 234 567 8900 (for 2FA)")
+            
+            st.markdown("<label style='font-size: 0.9rem; color: #31333F;'>Mobile Number (for 2FA)</label>", unsafe_allow_html=True)
+            mobile_col1, mobile_col2 = st.columns([1, 2])
+            with mobile_col1:
+                country_code = st.selectbox("Code", ["+1 (US)", "+44 (UK)", "+91 (IN)", "+61 (AU)", "+81 (JP)", "+49 (DE)"], label_visibility="collapsed")
+            with mobile_col2:
+                mobile = st.text_input("Mobile Number", placeholder="234 567 8900", label_visibility="collapsed")
             password = st.text_input(
                 "Password", type="password", placeholder="At least 6 characters"
             )
@@ -329,8 +336,14 @@ def show_2fa_verification():
 
         st.info("📲 We've sent a 6-digit verification code to your registered Mobile Number and Email Address.")
         
+        # Simulate receiving an OTP
+        if "mock_otp" not in st.session_state:
+            st.session_state.mock_otp = str(random.randint(100000, 999999))
+            
+        st.success(f"📱 **Simulated SMS Received:** Your verification code is **{st.session_state.mock_otp}**")
+        
         with st.form("2fa_form"):
-            verification_code = st.text_input("Verification Code", placeholder="Enter 6-digit code (e.g., 123456)")
+            verification_code = st.text_input("Verification Code", placeholder="Enter 6-digit code")
             
             st.markdown("")
             col_a, col_b = st.columns(2)
@@ -339,17 +352,20 @@ def show_2fa_verification():
             with col_b:
                 if st.form_submit_button("Cancel", use_container_width=True):
                     del st.session_state.pending_2fa_user
+                    if "mock_otp" in st.session_state:
+                        del st.session_state.mock_otp
                     st.rerun()
             
             if verified:
-                if len(verification_code.strip()) >= 4:
+                if verification_code.strip() == st.session_state.mock_otp:
                     user = st.session_state.pending_2fa_user
                     del st.session_state.pending_2fa_user
+                    del st.session_state.mock_otp
                     st.session_state.user = user
                     st.success(f"🎉 Verification successful! Welcome back, {user['username']}!")
                     st.rerun()
                 else:
-                    st.error("❌ Please enter a valid verification code.")
+                    st.error("❌ Incorrect verification code. Please try again.")
 
 
 def show_dashboard(user):
