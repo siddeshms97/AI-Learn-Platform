@@ -261,10 +261,7 @@ def show_register():
                         uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(name=email, issuer_name="AI Learn")
                         qr = qrcode.make(uri)
                         
-                        import io
-                        img_buffer = io.BytesIO()
-                        qr.save(img_buffer, format="PNG")
-                        st.image(img_buffer.getvalue(), caption="Scan with Google Authenticator or Authy", width=250)
+                        st.image(qr.get_image(), caption="Scan with Google Authenticator or Authy", width=250)
                         st.code(totp_secret, language="plaintext")
                         st.markdown("<p style='text-align:center; color:#757575;'>If you can't scan the QR code, manually enter the secret key above.</p>", unsafe_allow_html=True)
 
