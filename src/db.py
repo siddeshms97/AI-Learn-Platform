@@ -24,6 +24,7 @@ def init_db():
         username TEXT UNIQUE NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
+        totp_secret TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_login TIMESTAMP
     )
@@ -178,14 +179,14 @@ def init_db():
     conn.close()
 
 
-def add_user(username, email, password_hash):
+def add_user(username, email, password_hash, totp_secret=None):
     """Add a new user"""
     conn = get_connection()
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-            (username, email, password_hash),
+            "INSERT INTO users (username, email, password_hash, totp_secret) VALUES (?, ?, ?, ?)",
+            (username, email, password_hash, totp_secret),
         )
         conn.commit()
         return True

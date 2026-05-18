@@ -1,5 +1,6 @@
 import streamlit as st
-import random
+import pyotp
+import qrcode
 from src.auth import register_user, login_user
 
 
@@ -247,14 +248,26 @@ def show_register():
                 if not mobile:
                     st.warning("⚠️ Mobile Number is recommended for 2-Step Verification.")
                 
-                success, message = register_user(
+                success, message, totp_secret = register_user(
                     username, email, password, password_confirm
                 )
                 if success:
                     st.success(message)
                     st.info(
-                        "🎉 Account created! Please sign in with your new credentials."
+                        "🎉 Account created! Please set up your Authenticator app by scanning the QR code below, then sign in."
                     )
+                    
+                    if totp_secret:
+                        uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(name=email, issuer_name="AI Learn")
+                        qr = qrcode.make(uri)
+                        
+                        import io
+                        img_buffer = io.BytesIO()
+                        qr.save(img_buffer, format="PNG")
+                        st.image(img_buffer.getvalue(), caption="Scan with Google Authenticator or Authy", width=250)
+                        st.code(totp_secret, language="plaintext")
+                        st.markdown("<p style='text-align:center; color:#757575;'>If you can't scan the QR code, manually enter the secret key above.</p>", unsafe_allow_html=True)
+
                 else:
                     st.error(f"❌ {message}")
 
@@ -334,16 +347,10 @@ def show_2fa_verification():
             unsafe_allow_html=True,
         )
 
-        st.info("📲 We've sent a 6-digit verification code to your registered Mobile Number and Email Address.")
-        
-        # Simulate receiving an OTP
-        if "mock_otp" not in st.session_state:
-            st.session_state.mock_otp = str(random.randint(100000, 999999))
-            
-        st.success(f"📱 **Simulated SMS Received:** Your verification code is **{st.session_state.mock_otp}**")
+        st.info("📲 Open your Authenticator App (e.g. Google Authenticator) and enter the 6-digit code for AI Learn.")
         
         with st.form("2fa_form"):
-            verification_code = st.text_input("Verification Code", placeholder="Enter 6-digit code")
+            verification_code = st.text_input("Authenticator Code", placeholder="Enter 6-digit code")
             
             st.markdown("")
             col_a, col_b = st.columns(2)
@@ -352,15 +359,22 @@ def show_2fa_verification():
             with col_b:
                 if st.form_submit_button("Cancel", use_container_width=True):
                     del st.session_state.pending_2fa_user
-                    if "mock_otp" in st.session_state:
-                        del st.session_state.mock_otp
                     st.rerun()
             
             if verified:
-                if verification_code.strip() == st.session_state.mock_otp:
-                    user = st.session_state.pending_2fa_user
+                user = st.session_state.pending_2fa_user
+                totp_secret = user.get("totp_secret")
+                
+                is_valid = False
+                if totp_secret:
+                    totp = pyotp.TOTP(totp_secret)
+                    is_valid = totp.verify(verification_code.strip())
+                else:
+                    # Legacy user bypass (or prompt to set up)
+                    is_valid = True
+                    
+                if is_valid:
                     del st.session_state.pending_2fa_user
-                    del st.session_state.mock_otp
                     st.session_state.user = user
                     st.success(f"🎉 Verification successful! Welcome back, {user['username']}!")
                     st.rerun()

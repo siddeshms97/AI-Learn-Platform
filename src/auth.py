@@ -1,5 +1,6 @@
 import bcrypt
 import streamlit as st
+import pyotp
 from src.db import add_user, get_user, update_user_login
 
 
@@ -25,11 +26,12 @@ def register_user(username, email, password, password_confirm):
         return False, "Password must be at least 6 characters"
 
     password_hash = hash_password(password)
+    totp_secret = pyotp.random_base32()
 
-    if add_user(username, email, password_hash):
-        return True, "Registration successful! Please log in."
+    if add_user(username, email, password_hash, totp_secret):
+        return True, "Registration successful! Please log in.", totp_secret
     else:
-        return False, "Username or email already exists"
+        return False, "Username or email already exists", None
 
 
 def login_user(username, password):
